@@ -2,7 +2,7 @@ name: Auditoria do portal público
 
 on:
   push:
-    branches: [main, site-v2-publicacao]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
