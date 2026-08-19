@@ -1,0 +1,52 @@
+name: Auditoria do portal público
+
+on:
+  push:
+    branches: [main, site-v2-publicacao]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validar estrutura do site
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f .nojekyll
+          test -f cgf-emblem-digital.png
+          test -f cgf-hero-medallion.png
+
+          js_asset=$(grep -oE 'src="\./assets/[^"]+\.js"' index.html | head -n1 | sed -E 's/src="\.\///; s/"$//')
+          css_asset=$(grep -oE 'href="\./assets/[^"]+\.css"' index.html | head -n1 | sed -E 's/href="\.\///; s/"$//')
+
+          test -n "$js_asset" && test -f "$js_asset"
+          test -n "$css_asset" && test -f "$css_asset"
+
+      - name: Impedir exposição de origem temporária ou identidade pessoal
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE --exclude-dir=.git --exclude='*.md' \
+            '(chatgpt\.com/share|chatgpt\.com/canvas|gsilveiralima|Gabriel[[:space:]]+Silveira[[:space:]]+Lima)' \
+            index.html assets robots.txt site.webmanifest 2>/dev/null; then
+            echo 'Conteúdo público contém referência que não deve aparecer no portal.' >&2
+            exit 1
+          fi
+
+      - name: Verificar ausência de sourcemaps públicos
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f -name '*.map' -not -path './.git/*' | grep -q .; then
+            echo 'Sourcemaps públicos detectados.' >&2
+            exit 1
+          fi
