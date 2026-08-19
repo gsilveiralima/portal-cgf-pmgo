@@ -1,0 +1,18 @@
+{
+  "name": "CGF Goiás | Orientação e Serviços",
+  "short_name": "CGF Goiás",
+  "description": "Portal público de orientação do Comando de Gestão e Finanças da Polícia Militar do Estado de Goiás.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f4ef",
+  "theme_color": "#071a2b",
+  "icons": [
+    {
+      "src": "./cgf-emblem-digital.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

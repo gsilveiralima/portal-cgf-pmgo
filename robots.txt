@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# O portal contém somente conteúdo público e informativo.
+# Não há áreas administrativas ou dados pessoais indexáveis.
