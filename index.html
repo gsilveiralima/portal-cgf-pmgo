@@ -1,33 +1,53 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Portal informativo do Comando de Gestão e Finanças da Polícia Militar do Estado de Goiás, com orientação por seção, contatos oficiais e atualizações da PMGO."
-    />
-    <meta name="robots" content="index,follow" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta name="theme-color" content="#071a2b" />
-    <meta name="color-scheme" content="light" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:site_name" content="Comando de Gestão e Finanças — PMGO" />
-    <meta property="og:title" content="CGF Goiás | Orientação e Serviços" />
-    <meta
-      property="og:description"
-      content="Orientação pública sobre as seções, serviços e canais do Comando de Gestão e Finanças da PMGO."
-    />
-    <meta property="og:image" content="./cgf-hero-medallion.png" />
-    <link rel="icon" href="./cgf-emblem-digital.png" />
-    <link rel="apple-touch-icon" href="./cgf-emblem-digital.png" />
-    <link rel="manifest" href="./site.webmanifest" />
-    <title>CGF Goiás | Orientação e Serviços</title>
-    <script type="module" crossorigin src="./assets/index-CzXOL65S.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DfqFnF9R.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Portal público de orientação do Comando de Gestão e Finanças da Polícia Militar do Estado de Goiás, com seções, busca, notícias e orientador de triagem.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="theme-color" content="#061827">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Comando de Gestão e Finanças — PMGO">
+  <meta property="og:title" content="CGF Goiás | Orientação e Serviços">
+  <meta property="og:description" content="Encontre a seção do CGF, consulte contatos públicos e acompanhe atualizações oficiais da PMGO.">
+  <meta property="og:url" content="https://portal-cgf-pmgo.vercel.app/">
+  <meta property="og:image" content="https://portal-cgf-pmgo.vercel.app/cgf-hero-medallion.png">
+  <link rel="canonical" href="https://portal-cgf-pmgo.vercel.app/">
+  <link rel="icon" href="/cgf-emblem-digital.png">
+  <link rel="apple-touch-icon" href="/cgf-emblem-digital.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="/style.css">
+  <title>CGF Goiás | Orientação e Serviços</title>
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+<header class="site-header">
+  <div class="topbar"><div class="container"><span>Polícia Militar do Estado de Goiás</span><span>Orientação pública · confirme nos canais oficiais</span></div></div>
+  <div class="container nav-wrap">
+    <a class="brand" href="/" aria-label="CGF Goiás — página inicial"><img src="/cgf-emblem-digital.png" alt=""><strong>CGF Goiás</strong><span>Comando de Gestão e Finanças</span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-menu">Menu</button>
+    <nav id="primary-menu" class="primary-menu" aria-label="Navegação principal" data-open="false"><a href="#orientador">Orientador</a><a href="#secoes">Seções</a><a href="#atualizacoes">Atualizações</a><a href="#faq">FAQ</a><a href="#canais">Canais oficiais</a></nav>
+  </div>
+</header>
+<main id="conteudo">
+  <section class="hero"><div class="container hero-grid"><div><p class="eyebrow">CGF Goiás · orientação pública</p><h1>Encontre o caminho certo para sua demanda.</h1><p class="lead">Localize a seção responsável, consulte contatos públicos e acompanhe informações da PMGO sem expor dados pessoais.</p><div class="hero-actions"><a class="button" href="#orientador">Orientar minha dúvida</a><a class="button button-ghost" href="#secoes">Conhecer as seções</a></div></div><div class="hero-art"><img src="/cgf-hero-medallion.png" alt="Insígnia do Comando de Gestão e Finanças"></div></div></section>
+  <div class="container quick-links" aria-label="Atalhos oficiais"><a href="https://goias.gov.br/policiamilitar/" target="_blank" rel="noopener noreferrer">Portal oficial PMGO ↗</a><a href="https://siscop.pm.go.gov.br/index.php?class=articulacaoDashboard" target="_blank" rel="noopener noreferrer">Articulação PMGO ↗</a><a href="https://goias.gov.br/policiamilitar/fale-conosco-pmgo/" target="_blank" rel="noopener noreferrer">Fale Conosco ↗</a><a href="https://goias.gov.br/policiamilitar/acesso-a-informacao/" target="_blank" rel="noopener noreferrer">Acesso à Informação ↗</a></div>
+
+  <section id="orientador" class="block orient-panel"><div class="container orient-grid"><div><p class="eyebrow">Orientador CGF</p><h2>Descreva somente o assunto.</h2><p>O classificador probabilístico funciona no backend, utiliza apenas conteúdo público das seções e retorna um nível de confiança. Ele não consulta SEI, RHNet, folha ou qualquer base pessoal.</p><div class="notice"><strong>Proteção automática</strong><p>CPF, RG, matrícula, telefone, e-mail, dados bancários, senha, endereço e números de processo são bloqueados antes da classificação.</p></div></div><form id="orient-form" class="orient-form"><label for="orient-input">Qual é o assunto da sua dúvida?</label><textarea id="orient-input" name="message" maxlength="500" required aria-describedby="orient-hint" placeholder="Ex.: preciso de orientação sobre identidade funcional"></textarea><p id="orient-hint" class="form-hint">Não informe nomes, documentos, números de processo ou detalhes de caso individual.</p><button class="button" type="submit">Encontrar seção provável</button><div id="orient-result" class="result-card" role="status" aria-live="polite"></div></form></div></section>
+
+  <section id="secoes" class="block"><div class="container"><div class="section-heading"><div><p class="eyebrow green">Estrutura de atendimento</p><h2>Seções do CGF</h2></div><p>Competências resumidas a partir do Regimento Interno do CGF — Portaria nº 18.207/2024, sem reprodução de procedimentos internos ou informações reservadas.</p></div><div id="section-grid" class="section-grid"></div></div></section>
+
+  <section class="search-wrap" aria-labelledby="search-title"><div class="container"><div class="section-heading"><div><p class="eyebrow green">Busca pública</p><h2 id="search-title">Pesquisar no portal</h2></div><p>A busca consulta as seções e as perguntas frequentes desta base pública.</p></div><form id="search-form" class="search-form" role="search"><label class="sr-only" for="site-search">Pesquisar</label><input id="site-search" type="search" maxlength="120" placeholder="Ex.: recadastramento, concurso, arquivo, folha…"><button class="button" type="submit">Pesquisar</button></form><div id="search-results" class="search-results" role="status" aria-live="polite" hidden></div></div></section>
+
+  <section id="atualizacoes" class="block"><div class="container"><div class="section-heading"><div><p class="eyebrow green">Fonte oficial</p><h2>Atualizações da PMGO</h2></div><span id="news-status" class="news-status" aria-live="polite">Consultando backend oficial…</span></div><div id="news-grid" class="news-grid"></div></div></section>
+
+  <section id="faq" class="block"><div class="container"><div class="section-heading"><div><p class="eyebrow green">Perguntas frequentes</p><h2>Antes de encaminhar</h2></div><p>Respostas gerais sobre privacidade, competência do portal e canais oficiais.</p></div><div id="faq-list" class="faq-list"></div></div></section>
+
+  <section id="canais" class="callout"><div class="container split"><div><p class="eyebrow">Canais oficiais</p><h2>Confirme antes de enviar documentos.</h2><p>Informações de contato podem mudar. Para demandas sensíveis ou individualizadas, utilize somente os canais oficiais da PMGO.</p></div><div class="button-row"><a class="button" href="https://siscop.pm.go.gov.br/index.php?class=articulacaoDashboard" target="_blank" rel="noopener noreferrer">Articulação PMGO</a><a class="button button-ghost" href="https://goias.gov.br/policiamilitar/fale-conosco-pmgo/" target="_blank" rel="noopener noreferrer">Fale Conosco</a></div></div></section>
+</main>
+<footer class="site-footer"><div class="container footer-grid"><div><strong>CGF Goiás</strong><p>Portal público de orientação sobre as seções do Comando de Gestão e Finanças da PMGO.</p></div><div><strong>Comando do CGF</strong><p>Caixa SEI 09497<br>Telefone (62) 99302-700<br><a href="mailto:assessoriacgfpm@gmail.com">assessoriacgfpm@gmail.com</a></p></div><div><strong>Referências</strong><p><a href="https://goias.gov.br/policiamilitar/portarias-pmgo/" target="_blank" rel="noopener noreferrer">Portarias PMGO</a><br><a href="https://siscop.pm.go.gov.br/index.php?class=articulacaoDashboard" target="_blank" rel="noopener noreferrer">Articulação PMGO</a></p></div></div><div class="container legal-note">Este portal não substitui ato, publicação, atendimento ou sistema oficial da Polícia Militar do Estado de Goiás. Não há consulta de processos ou armazenamento de conversas.</div></footer>
+<script type="module" src="/app.js"></script>
+</body>
 </html>

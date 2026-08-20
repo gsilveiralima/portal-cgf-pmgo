@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /api/
 
-# O portal contém somente conteúdo público e informativo.
-# Não há áreas administrativas ou dados pessoais indexáveis.
+Sitemap: https://portal-cgf-pmgo.vercel.app/sitemap.xml
