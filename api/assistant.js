@@ -86,7 +86,7 @@ export default async function handler(req, res) {
 
   try {
     const result = await generateText({
-      model: 'openai/gpt-5.6-luna',
+      model: 'openai/gpt-5.6-sol',
       system: ASSISTANT_POLICY,
       prompt,
       maxOutputTokens: 500
