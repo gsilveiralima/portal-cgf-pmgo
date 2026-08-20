@@ -7,11 +7,23 @@ on:
 permissions:
   contents: read
 jobs:
-  quality:
+  tests:
+    name: Testes funcionais
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm run check
+      - name: Executar testes
+        run: npm test
+  audit:
+    name: Auditoria visual, segurança e publicação
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Executar auditoria
+        run: npm run audit
