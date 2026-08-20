@@ -13,7 +13,6 @@ function send(res, status, payload) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   return res.json(payload);
 }
-
 function cleanHistory(value) {
   if (!Array.isArray(value)) return [];
   return value.slice(-MAX_HISTORY).flatMap((item) => {
@@ -22,35 +21,19 @@ function cleanHistory(value) {
     return role && content ? [{ role, content }] : [];
   });
 }
-
 function routePayload(routing) {
-  return routing.section ? {
-    id: routing.section.id,
-    title: routing.section.title,
-    url: `/secoes/${routing.section.slug}/`,
-    confidence: Number(routing.confidence.toFixed(2)),
-    confidenceLabel: confidenceLabel(routing.confidence)
-  } : null;
+  return routing.section ? { id: routing.section.id, title: routing.section.title, url: `/secoes/${routing.section.slug}/`, confidence: Number(routing.confidence.toFixed(2)), confidenceLabel: confidenceLabel(routing.confidence) } : null;
 }
-
 function fallbackAnswer(routing) {
-  if (!routing.section) {
-    return 'Não consegui identificar uma seção com segurança usando apenas a base pública. Consulte a lista de seções do portal ou utilize a Articulação PMGO/Fale Conosco para confirmação institucional.';
-  }
+  const prefix = 'A camada generativa de IA está temporariamente indisponível; estou usando a triagem automática da base pública do CGF. ';
+  if (!routing.section) return prefix + 'Não consegui identificar uma seção com segurança. Consulte a lista de seções do portal ou utilize a Articulação PMGO/Fale Conosco para confirmação institucional.';
   const section = routing.section;
-  const contact = [
-    `Caixa SEI ${section.contact.sei}`,
-    section.contact.phone ? `telefone ${section.contact.phone}` : null,
-    section.contact.email ? `e-mail ${section.contact.email}` : null
-  ].filter(Boolean).join(' · ');
-  return `Pela base pública do CGF, a seção mais provável é ${section.id} — ${section.title}. ${section.summary} Contato público: ${contact}. Confirme no canal oficial antes de enviar documentos ou dados pessoais.`;
+  const contact = [`Caixa SEI ${section.contact.sei}`, section.contact.phone ? `telefone ${section.contact.phone}` : null, section.contact.email ? `e-mail ${section.contact.email}` : null].filter(Boolean).join(' · ');
+  return `${prefix}A seção mais provável é ${section.id} — ${section.title}. ${section.summary} Contato público: ${contact}. Confirme no canal oficial antes de enviar documentos ou dados pessoais.`;
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return send(res, 405, { ok: false, message: 'Método não permitido.' });
-  }
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { ok: false, message: 'Método não permitido.' }); }
   if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { ok: false, message: 'Origem não permitida.' });
 
   const message = String(req.body?.message || '').trim();
@@ -76,6 +59,6 @@ export default async function handler(req, res) {
     return send(res, 200, { ok: true, mode: 'ai', answer, route: routePayload(routing), privacy: 'A conversa não é armazenada pelo Portal CGF. Não informe dados pessoais, processuais, bancários ou sigilosos.', source: 'Base pública do Portal CGF / canais oficiais da PMGO' });
   } catch (error) {
     console.error('Assistant AI unavailable', error?.name || 'Error');
-    return send(res, 200, { ok: true, mode: 'public-fallback', answer: fallbackAnswer(routing), route: routePayload(routing), notice: 'A camada generativa está temporariamente indisponível; esta resposta foi produzida pela triagem automática da base pública.', privacy: 'A conversa não é armazenada pelo Portal CGF.' });
+    return send(res, 200, { ok: true, mode: 'public-fallback', answer: fallbackAnswer(routing), route: routePayload(routing), privacy: 'A conversa não é armazenada pelo Portal CGF.' });
   }
 }
