@@ -1,9 +1,10 @@
+import { generateText } from 'ai';
 import { buildAssistantContext, ASSISTANT_POLICY } from '../lib/assistant-context.js';
 import { classifySection, confidenceLabel } from '../lib/classifier.js';
 import { validatePublicPrompt } from '../lib/security.js';
 
 const MAX_HISTORY = 8;
-const MAX_MESSAGE = 700;
+const MAX_MESSAGE = 500;
 
 function send(res, status, payload) {
   res.status(status);
@@ -20,18 +21,6 @@ function cleanHistory(value) {
     const content = String(item?.content || '').trim().slice(0, MAX_MESSAGE);
     return role && content ? [{ role, content }] : [];
   });
-}
-
-function extractText(response) {
-  if (typeof response?.output_text === 'string' && response.output_text.trim()) return response.output_text.trim();
-  const parts = [];
-  for (const item of response?.output || []) {
-    for (const content of item?.content || []) {
-      if (content?.type === 'output_text' && typeof content.text === 'string') parts.push(content.text);
-      else if (typeof content?.text === 'string') parts.push(content.text);
-    }
-  }
-  return parts.join('\n').trim();
 }
 
 function conversationText(history, message) {
@@ -76,15 +65,6 @@ export default async function handler(req, res) {
 
   const routing = classifySection(validation.value);
   const context = buildAssistantContext();
-  const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
-
-  if (!gatewayToken) {
-    return send(res, 503, {
-      ok: false,
-      code: 'AI_NOT_CONFIGURED',
-      message: 'O assistente está temporariamente indisponível. Utilize o orientador do portal ou os canais oficiais da PMGO.'
-    });
-  }
 
   const probable = routing.section ? {
     id: routing.section.id,
@@ -105,33 +85,14 @@ export default async function handler(req, res) {
   ].join('\n');
 
   try {
-    const upstream = await fetch('https://ai-gateway.vercel.sh/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${gatewayToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-5.6-luna',
-        instructions: ASSISTANT_POLICY,
-        input: prompt,
-        max_output_tokens: 500
-      }),
-      signal: AbortSignal.timeout(12000)
+    const result = await generateText({
+      model: 'openai/gpt-5.6-luna',
+      system: ASSISTANT_POLICY,
+      prompt,
+      maxOutputTokens: 500
     });
 
-    if (!upstream.ok) {
-      const requestId = upstream.headers.get('x-request-id') || upstream.headers.get('x-vercel-id');
-      console.error('AI Gateway error', upstream.status, requestId || 'no-request-id');
-      return send(res, 502, {
-        ok: false,
-        code: 'AI_UPSTREAM_ERROR',
-        message: 'Não consegui concluir a resposta agora. Utilize o orientador do portal ou os canais oficiais da PMGO.'
-      });
-    }
-
-    const data = await upstream.json();
-    const answer = extractText(data);
+    const answer = String(result.text || '').trim();
     if (!answer) throw new Error('Empty AI response');
 
     return send(res, 200, {
