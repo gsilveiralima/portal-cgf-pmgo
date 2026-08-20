@@ -7,7 +7,5 @@
   "display": "standalone",
   "background_color": "#f4f4ef",
   "theme_color": "#061827",
-  "icons": [
-    {"src":"/cgf-emblem-digital.png","sizes":"any","type":"image/png","purpose":"any maskable"}
-  ]
+  "icons": [{"src":"/cgf-emblem.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
