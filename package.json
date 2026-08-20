@@ -8,5 +8,5 @@
     "audit": "node scripts/audit.mjs",
     "check": "npm test && npm run audit"
   },
-  "engines": { "node": ">=20" }
+  "engines": { "node": "22.x" }
 }
