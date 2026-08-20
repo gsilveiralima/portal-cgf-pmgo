@@ -43,10 +43,12 @@ for (const signature of ['.government-bar','.accessibility-controls','.hero__med
 }
 
 const assistantApi = fs.readFileSync(path.join(root,'api/assistant.js'),'utf8');
-for (const securitySignature of ['validatePublicPrompt','VERCEL_OIDC_TOKEN','AI_GATEWAY_API_KEY','gpt-5.6-luna']) {
+for (const securitySignature of ['generateText','validatePublicPrompt','gpt-5.6-luna','ASSISTANT_POLICY']) {
   if (!assistantApi.includes(securitySignature)) throw new Error(`Assistente IA sem requisito de segurança/configuração: ${securitySignature}`);
 }
-if (assistantApi.includes('OPENAI_API_KEY')) throw new Error('Assistente público não deve depender de chave OpenAI exposta/configurada diretamente no frontend.');
+for (const forbiddenSecret of ['OPENAI_API_KEY','AI_GATEWAY_API_KEY','VERCEL_OIDC_TOKEN']) {
+  if (assistantApi.includes(forbiddenSecret)) throw new Error(`Assistente público não deve manipular segredo/token diretamente: ${forbiddenSecret}`);
+}
 
 const assistantClient = fs.readFileSync(path.join(root,'assistant.js'),'utf8');
 if (!assistantClient.includes("fetch('/api/assistant'")) throw new Error('Interface do Assistente CGF não chama o backend próprio.');
@@ -81,6 +83,9 @@ for(const expected of ['Content-Security-Policy','X-Content-Type-Options','Permi
 }
 if (!headers.includes('https://goias.gov.br')) throw new Error('CSP não permite a fonte oficial goias.gov.br necessária às atualizações públicas.');
 if ((vercel.functions?.['api/*.js']?.maxDuration || 0) < 15) throw new Error('Timeout das funções é insuficiente para o Assistente CGF.');
+
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+if (!pkg.dependencies?.ai) throw new Error('Dependência ai ausente para autenticação OIDC automática no Vercel AI Gateway.');
 
 const sitemap=fs.readFileSync(path.join(root,'sitemap.xml'),'utf8');
 for(const section of SECTIONS) {
