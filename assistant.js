@@ -58,7 +58,7 @@ function buildUi() {
   const input = document.createElement('textarea');
   input.id = 'cgf-ai-input';
   input.className = 'cgf-ai-input';
-  input.maxLength = 700;
+  input.maxLength = 500;
   input.rows = 2;
   input.placeholder = 'Ex.: qual seção trata de recadastramento?';
   input.autocomplete = 'off';
@@ -97,6 +97,7 @@ function buildUi() {
     event.preventDefault();
     const message = input.value.trim();
     if (!message || send.disabled) return;
+    const priorHistory = history.slice(-MAX_HISTORY);
     input.value = '';
     addMessage('user', message);
     send.disabled = true;
@@ -105,7 +106,7 @@ function buildUi() {
       const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: history.slice(-MAX_HISTORY) })
+        body: JSON.stringify({ message, history: priorHistory })
       });
       const data = await response.json().catch(() => ({}));
       typing.remove();
