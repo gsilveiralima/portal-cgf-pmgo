@@ -7,6 +7,12 @@ on:
 permissions:
   contents: read
 jobs:
+  runner-smoke:
+    name: Disponibilidade do runner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar executor
+        run: echo "runner-ok"
   tests:
     name: Testes funcionais
     runs-on: ubuntu-latest
