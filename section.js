@@ -1,4 +1,5 @@
 import { SECTIONS, SITE } from './public-data.js';
+import './assistant.js';
 
 const slug = document.body.dataset.section;
 const section = SECTIONS.find((item) => item.slug === slug);
