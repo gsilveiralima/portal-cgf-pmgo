@@ -2,6 +2,21 @@ const MAX_HISTORY = 8;
 const REQUEST_TIMEOUT_MS = 20000;
 const history = [];
 
+const CLIENT_SENSITIVE_PATTERNS = [
+  /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/,
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
+  /(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?9?\d{4}[-\s]?\d{4}\b/,
+  /\b(?:sei|processo)\s*(?:n[ºo.]*)?\s*[:#-]?\s*\d{8,}(?:[./-]\d+)*\b/i,
+  /\b(?:senha|password|pin)\s*[:=-]\s*\S+/i,
+  /\b(?:bearer|authorization)\s*[:=]?\s+[A-Za-z0-9._~+\/-]{16,}\b/i,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/,
+  /\b(?:sk|pk|api)[-_][A-Za-z0-9_-]{16,}\b/i
+];
+
+function containsSensitiveData(value = '') {
+  return CLIENT_SENSITIVE_PATTERNS.some((pattern) => pattern.test(String(value)));
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -63,6 +78,8 @@ function buildUi() {
   input.rows = 2;
   input.placeholder = 'Ex.: qual seção trata de recadastramento?';
   input.autocomplete = 'off';
+  input.autocapitalize = 'sentences';
+  input.spellcheck = true;
   const send = el('button', 'cgf-ai-send', 'Enviar');
   send.type = 'submit';
   row.append(input, send);
@@ -104,9 +121,20 @@ function buildUi() {
     const message = input.value.trim();
     if (!message || send.disabled) return;
 
+    if (containsSensitiveData(message)) {
+      input.value = '';
+      addMessage(
+        'assistant',
+        'Proteção de dados ativada no navegador. Remova identificadores, telefone, e-mail, número de processo, senha ou token e descreva somente o assunto geral.',
+        null,
+        true
+      );
+      return;
+    }
+
     const priorHistory = history.slice(-MAX_HISTORY);
     input.value = '';
-    addMessage('user', message);
+    const userBubble = addMessage('user', message);
     send.disabled = true;
     const typing = addTyping();
     const controller = new AbortController();
@@ -122,6 +150,7 @@ function buildUi() {
       const data = await response.json().catch(() => ({}));
       typing.remove();
       if (!response.ok || !data.ok) {
+        if (data.blocked) userBubble.textContent = 'Mensagem ocultada localmente por proteção de dados.';
         const errorText = data.message || 'Não consegui responder agora. Utilize o orientador do portal ou os canais oficiais da PMGO.';
         addMessage('assistant', errorText, null, true);
         return;
