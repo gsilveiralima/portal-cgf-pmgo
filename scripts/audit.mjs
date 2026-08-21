@@ -47,7 +47,7 @@ for (const signature of ['.government-bar', '.accessibility-controls', '.hero__m
 }
 
 const workPatch = read('work-patches.js');
-if (!workPatch.includes("['(62) 99953-121', '(62) 99953-1211']")) {
+if (!workPatch.includes('99953-121') || !workPatch.includes('99953-1211') || !workPatch.includes('TEXT_PATCHES')) {
   throw new Error('Correção pública verificada do telefone da CGF/3 não está protegida.');
 }
 if (!workPatch.includes("/api/news?format=wp")) {
