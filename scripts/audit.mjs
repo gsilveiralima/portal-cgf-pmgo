@@ -10,7 +10,7 @@ const required = [
   'index.html', '404.html', 'style.css', 'app.js', 'section.js', 'public-data.js',
   'robots.txt', 'sitemap.xml', 'site.webmanifest', 'vercel.json', 'work-patches.js',
   'api/news.js', 'api/orientar.js', 'api/search.js', 'api/assistant.js',
-  'assistant.js', 'assistant.css', 'lib/assistant-context.js', 'lib/security.js', 'lib/classifier.js',
+  'assistant.js', 'assistant.css', 'lib/assistant-context.js', 'lib/privacy.js', 'lib/security.js', 'lib/classifier.js',
   'cgf-emblem-digital.png', 'cgf-hero-medallion.png',
   'assets/index-CzXOL65S.js', 'assets/index-DfqFnF9R.css'
 ];
@@ -57,6 +57,18 @@ if (!workPatch.includes("/api/news?format=wp")) {
   throw new Error('Bundle canônico não está protegido pelo proxy same-origin de notícias.');
 }
 
+const privacyModule = read('lib/privacy.js');
+for (const signature of ['SENSITIVE_PATTERNS', 'detectSensitiveData', 'containsSensitiveData']) {
+  if (!privacyModule.includes(signature)) throw new Error(`Política compartilhada de privacidade sem requisito: ${signature}`);
+}
+for (const detector of ['CPF', 'processo SEI', 'token de autenticação', 'token JWT', 'chave de API']) {
+  if (!privacyModule.includes(detector)) throw new Error(`Detector sensível ausente da política compartilhada: ${detector}`);
+}
+
+const securityModule = read('lib/security.js');
+if (!securityModule.includes("from './privacy.js'")) throw new Error('Validação do servidor não reutiliza a política compartilhada de privacidade.');
+if (!securityModule.includes('validatePublicPrompt')) throw new Error('Validação pública do servidor ausente.');
+
 const assistantApi = read('api/assistant.js');
 for (const signature of ['generateText', 'validatePublicPrompt', 'gpt-5.6-sol', 'ASSISTANT_POLICY', 'sameOrigin', 'parseBody']) {
   if (!assistantApi.includes(signature)) throw new Error(`Assistente IA sem requisito: ${signature}`);
@@ -66,12 +78,11 @@ for (const forbiddenSecret of ['OPENAI_API_KEY', 'AI_GATEWAY_API_KEY', 'VERCEL_O
 }
 
 const assistantClient = read('assistant.js');
+if (!assistantClient.includes("from './lib/privacy.js'")) throw new Error('Assistente do navegador não reutiliza a política compartilhada de privacidade.');
+if (!assistantClient.includes('containsSensitiveData')) throw new Error('Assistente CGF não possui bloqueio preventivo de dados sensíveis no cliente.');
 if (!assistantClient.includes("fetch('/api/assistant'")) throw new Error('Interface do Assistente CGF não chama o backend próprio.');
 if (!assistantClient.includes('Não informe CPF')) throw new Error('Interface do Assistente CGF não exibe aviso de privacidade.');
 if (!assistantClient.includes('REQUEST_TIMEOUT_MS')) throw new Error('Assistente CGF não possui timeout explícito no cliente.');
-if (!assistantClient.includes('CLIENT_SENSITIVE_PATTERNS') || !assistantClient.includes('containsSensitiveData')) {
-  throw new Error('Assistente CGF não possui bloqueio preventivo de dados sensíveis no cliente.');
-}
 if (!assistantClient.includes("remember('user', message)")) {
   throw new Error('Histórico do Assistente CGF não possui gravação explícita apenas após resposta válida.');
 }
@@ -177,4 +188,4 @@ if (suspiciousPhones.length) {
   console.warn(`AVISO: contatos com formato telefônico a reconfirmar na Articulação PMGO: ${suspiciousPhones.join(' | ')}`);
 }
 
-console.log(`Auditoria concluída: interface canônica preservada, proxy de notícias same-origin, Assistente CGF com bloqueio preventivo no cliente e servidor, busca POST same-origin e sem cache, PAP reservado não exposto, ${SECTIONS.length} seções, headers, sitemap e privacidade verificados.`);
+console.log(`Auditoria concluída: interface canônica preservada, proxy de notícias same-origin, política de privacidade compartilhada no cliente/servidor, busca POST same-origin e sem cache, PAP reservado não exposto, ${SECTIONS.length} seções, headers, sitemap e contatos verificados estruturalmente.`);
