@@ -1,17 +1,19 @@
 import { generateText } from 'ai';
 import { buildAssistantContext, ASSISTANT_POLICY } from '../lib/assistant-context.js';
 import { classifySection, confidenceLabel } from '../lib/classifier.js';
+import { startApiObservation } from '../lib/observability.js';
 import { validatePublicPrompt } from '../lib/security.js';
 
 const MAX_HISTORY = 8;
 const MAX_MESSAGE = 500;
 
-function send(res, status, payload) {
+function send(res, observation, status, payload, extra = {}) {
   res.status(status);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Vary', 'Origin');
+  observation.finish(res, status, extra);
   return res.json(payload);
 }
 
@@ -63,35 +65,38 @@ function fallbackAnswer(routing) {
 }
 
 export default async function handler(req, res) {
+  const observation = startApiObservation(req, '/api/assistant');
+  observation.applyHeaders(res);
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
-    return send(res, 405, { ok: false, message: 'Método não permitido.' });
+    return send(res, observation, 405, { ok: false, message: 'Método não permitido.' });
   }
-  if (!sameOrigin(req)) return send(res, 403, { ok: false, message: 'Origem não permitida.' });
+  if (!sameOrigin(req)) return send(res, observation, 403, { ok: false, message: 'Origem não permitida.' });
 
   const body = parseBody(req.body);
   const message = String(body.message || '').trim();
   const validation = validatePublicPrompt(message);
   if (!validation.ok) {
-    return send(res, 400, {
+    return send(res, observation, 400, {
       ok: false,
       blocked: validation.code === 'SENSITIVE_DATA',
       code: validation.code,
       detected: validation.detected || [],
       message: validation.message
-    });
+    }, { mode: validation.code === 'SENSITIVE_DATA' ? 'privacy-block' : 'validation' });
   }
 
   const history = cleanHistory(body.history);
   for (const item of history.filter((entry) => entry.role === 'user')) {
     const checked = validatePublicPrompt(item.content);
     if (!checked.ok && checked.code === 'SENSITIVE_DATA') {
-      return send(res, 400, {
+      return send(res, observation, 400, {
         ok: false,
         blocked: true,
         code: 'SENSITIVE_DATA',
         message: 'A conversa contém dados pessoais. Inicie uma nova pergunta descrevendo somente o assunto geral.'
-      });
+      }, { mode: 'history-privacy-block' });
     }
   }
 
@@ -117,23 +122,23 @@ export default async function handler(req, res) {
     });
     const answer = String(result.text || '').trim();
     if (!answer) throw new Error('Empty AI response');
-    return send(res, 200, {
+    return send(res, observation, 200, {
       ok: true,
       mode: 'ai',
       answer,
       route: routePayload(routing),
       privacy: 'O Portal CGF não mantém banco de dados de conversas. O texto é processado somente para gerar a orientação solicitada.',
       source: 'Base pública do Portal CGF / canais oficiais da PMGO'
-    });
+    }, { mode: 'ai', source: routing.section?.id || 'unmatched' });
   } catch (error) {
     console.error('Assistant AI unavailable', error?.name || 'Error');
-    return send(res, 200, {
+    return send(res, observation, 200, {
       ok: true,
       mode: 'public-fallback',
       answer: fallbackAnswer(routing),
       route: routePayload(routing),
       privacy: 'O Portal CGF não mantém banco de dados de conversas.',
       source: 'Base pública local do Portal CGF'
-    });
+    }, { mode: 'public-fallback', source: routing.section?.id || 'unmatched' });
   }
 }
