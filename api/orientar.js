@@ -6,7 +6,24 @@ function send(res, status, payload) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Vary', 'Origin');
   return res.json(payload);
+}
+
+function parseBody(body) {
+  if (body && typeof body === 'object') return body;
+  if (typeof body !== 'string') return {};
+  try { return JSON.parse(body); } catch { return {}; }
+}
+
+function sameOrigin(req) {
+  const headers = req?.headers || {};
+  if (headers['sec-fetch-site'] === 'cross-site') return false;
+  const origin = headers.origin;
+  if (!origin) return true;
+  const host = String(headers['x-forwarded-host'] || headers.host || '').split(',')[0].trim();
+  if (!host) return false;
+  try { return new URL(origin).host === host; } catch { return false; }
 }
 
 export default function handler(req, res) {
@@ -14,10 +31,19 @@ export default function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { ok: false, message: 'Método não permitido.' });
   }
+  if (!sameOrigin(req)) return send(res, 403, { ok: false, message: 'Origem não permitida.' });
 
-  const message = typeof req.body === 'string' ? (() => { try { return JSON.parse(req.body).message; } catch { return ''; } })() : req.body?.message;
-  const validation = validatePublicPrompt(message);
-  if (!validation.ok) return send(res, 400, { ok: false, blocked: validation.code === 'SENSITIVE_DATA', ...validation });
+  const body = parseBody(req.body);
+  const validation = validatePublicPrompt(body.message);
+  if (!validation.ok) {
+    return send(res, 400, {
+      ok: false,
+      blocked: validation.code === 'SENSITIVE_DATA',
+      code: validation.code,
+      detected: validation.detected || [],
+      message: validation.message
+    });
+  }
 
   const result = classifySection(validation.value);
   if (!result.section) {

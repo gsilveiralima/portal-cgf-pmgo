@@ -1,4 +1,7 @@
+import { containsSensitiveData } from './lib/privacy.js';
+
 const MAX_HISTORY = 8;
+const REQUEST_TIMEOUT_MS = 20000;
 const history = [];
 
 function el(tag, className, text) {
@@ -49,7 +52,7 @@ function buildUi() {
   messages.setAttribute('aria-live', 'polite');
   messages.setAttribute('aria-relevant', 'additions');
 
-  const warning = el('p', 'cgf-ai-warning', 'Não informe CPF, RG, matrícula, telefone pessoal, dados bancários, senha, número de processo ou informação sigilosa.');
+  const warning = el('p', 'cgf-ai-warning', 'Não informe CPF, RG, matrícula, telefone pessoal, e-mail, endereço, dados bancários, senha, token, número de processo ou informação sigilosa.');
 
   const form = el('form', 'cgf-ai-form');
   const label = el('label', '', 'Digite sua dúvida para o Assistente CGF');
@@ -62,6 +65,8 @@ function buildUi() {
   input.rows = 2;
   input.placeholder = 'Ex.: qual seção trata de recadastramento?';
   input.autocomplete = 'off';
+  input.autocapitalize = 'sentences';
+  input.spellcheck = true;
   const send = el('button', 'cgf-ai-send', 'Enviar');
   send.type = 'submit';
   row.append(input, send);
@@ -72,6 +77,11 @@ function buildUi() {
   document.body.append(panel, launcher);
 
   addMessage('assistant', 'Olá. Sou o Assistente CGF. Posso orientar sobre as seções do Comando de Gestão e Finanças, contatos públicos e assuntos gerais. Descreva somente o tema da sua dúvida, sem dados pessoais.');
+
+  function remember(role, content) {
+    history.push({ role, content });
+    while (history.length > MAX_HISTORY) history.shift();
+  }
 
   function setOpen(open) {
     panel.dataset.open = String(open);
@@ -97,30 +107,56 @@ function buildUi() {
     event.preventDefault();
     const message = input.value.trim();
     if (!message || send.disabled) return;
+
+    if (containsSensitiveData(message)) {
+      input.value = '';
+      addMessage(
+        'assistant',
+        'Proteção de dados ativada no navegador. Remova identificadores, contato pessoal, endereço, número de processo, dados bancários, senha ou token e descreva somente o assunto geral.',
+        null,
+        true
+      );
+      return;
+    }
+
     const priorHistory = history.slice(-MAX_HISTORY);
     input.value = '';
-    addMessage('user', message);
+    const userBubble = addMessage('user', message);
     send.disabled = true;
     const typing = addTyping();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     try {
       const response = await fetch('/api/assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: priorHistory })
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ message, history: priorHistory }),
+        signal: controller.signal
       });
       const data = await response.json().catch(() => ({}));
       typing.remove();
       if (!response.ok || !data.ok) {
-        addMessage('assistant', data.message || 'Não consegui responder agora. Utilize o orientador do portal ou os canais oficiais da PMGO.', null, true);
+        if (data.blocked) userBubble.textContent = 'Mensagem ocultada localmente por proteção de dados.';
+        const errorText = data.message || 'Não consegui responder agora. Utilize o orientador do portal ou os canais oficiais da PMGO.';
+        addMessage('assistant', errorText, null, true);
         return;
       }
-      addMessage('assistant', data.answer, data.route);
-      history.push({ role: 'assistant', content: data.answer });
-      while (history.length > MAX_HISTORY) history.shift();
-    } catch {
+      remember('user', message);
+      addMessage('assistant', data.answer, data.route, false, true, data.mode);
+    } catch (error) {
       typing.remove();
-      addMessage('assistant', 'O assistente está temporariamente indisponível. Utilize o orientador do portal ou os canais oficiais da PMGO.', null, true);
+      const timedOut = error?.name === 'AbortError';
+      addMessage(
+        'assistant',
+        timedOut
+          ? 'A resposta excedeu o tempo de espera. Utilize o orientador do portal ou tente novamente sem dados pessoais.'
+          : 'O assistente está temporariamente indisponível. Utilize o orientador do portal ou os canais oficiais da PMGO.',
+        null,
+        true
+      );
     } finally {
+      clearTimeout(timeout);
       send.disabled = false;
       input.focus();
     }
@@ -137,25 +173,28 @@ function buildUi() {
     return box;
   }
 
-  function addMessage(role, text, route, isError = false) {
+  function addMessage(role, text, route, isError = false, track = false, mode = null) {
     const box = el('div', `cgf-ai-msg cgf-ai-msg--${role}`);
     box.textContent = text;
-    if (role === 'assistant' && route && route.url) {
+
+    if (role === 'assistant' && mode) {
+      const modeLabel = mode === 'ai' ? 'Resposta por IA · base pública' : 'Fallback local · base pública';
+      box.append(el('div', 'cgf-ai-meta', modeLabel));
+    }
+
+    if (role === 'assistant' && route?.url) {
       const meta = el('div', 'cgf-ai-meta', `Triagem: ${route.confidenceLabel || 'estimada'} · ${Math.round((route.confidence || 0) * 100)}%`);
       const link = el('a', 'cgf-ai-route', `${route.id} — ${route.title}`);
       link.href = route.url;
       meta.append(document.createElement('br'), link);
       box.append(meta);
     } else if (isError && role === 'assistant') {
-      const meta = el('div', 'cgf-ai-meta', 'Nenhum dado foi enviado novamente automaticamente.');
-      box.append(meta);
+      box.append(el('div', 'cgf-ai-meta', 'A mensagem rejeitada ou sem resposta não entra no histórico enviado nas próximas perguntas.'));
     }
+
     messages.append(box);
     messages.scrollTop = messages.scrollHeight;
-    if (role === 'user') {
-      history.push({ role: 'user', content: text });
-      while (history.length > MAX_HISTORY) history.shift();
-    }
+    if (track) remember(role, text);
     return box;
   }
 }
