@@ -1,4 +1,5 @@
 import { FAQS, SECTIONS } from '../public-data.js';
+import { startApiObservation } from '../lib/observability.js';
 import { normalizeText, validatePublicPrompt } from '../lib/security.js';
 
 function score(query, text) {
@@ -19,37 +20,45 @@ function sameOrigin(req) {
   const origin = headers.origin;
   if (!origin) return true;
   const host = String(headers['x-forwarded-host'] || headers.host || '').split(',')[0].trim();
+  if (!host) return false;
   try { return new URL(origin).host === host; } catch { return false; }
 }
 
 export default function handler(req, res) {
-  if (!['GET', 'POST'].includes(req.method)) {
-    res.setHeader('Allow', 'GET, POST');
-    return res.status(405).json({ ok: false, message: 'Método não permitido.' });
-  }
-
+  const observation = startApiObservation(req, '/api/search');
+  observation.applyHeaders(res);
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Vary', 'Origin');
 
+  const send = (status, payload, extra = {}) => {
+    observation.finish(res, status, extra);
+    return res.status(status).json(payload);
+  };
+
+  if (!['GET', 'POST'].includes(req.method)) {
+    res.setHeader('Allow', 'GET, POST');
+    return send(405, { ok: false, message: 'Método não permitido.' });
+  }
+
   if (req.method === 'POST' && !sameOrigin(req)) {
-    return res.status(403).json({ ok: false, message: 'Origem não permitida.' });
+    return send(403, { ok: false, message: 'Origem não permitida.' });
   }
 
   const body = parseBody(req.body);
   const raw = req.method === 'POST' ? body.q : req.query?.q;
   const q = String(raw || '').trim().slice(0, 120);
-  if (q.length < 2) return res.status(200).json({ ok: true, results: [] });
+  if (q.length < 2) return send(200, { ok: true, results: [] }, { count: 0 });
 
   const validation = validatePublicPrompt(q);
   if (!validation.ok) {
-    return res.status(400).json({
+    return send(400, {
       ok: false,
       blocked: validation.code === 'SENSITIVE_DATA',
       code: validation.code,
       detected: validation.detected || [],
       message: validation.message
-    });
+    }, { mode: validation.code === 'SENSITIVE_DATA' ? 'privacy-block' : 'validation' });
   }
 
   const sectionResults = SECTIONS.map((s) => ({
@@ -71,5 +80,5 @@ export default function handler(req, res) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 
-  return res.status(200).json({ ok: true, results });
+  return send(200, { ok: true, results }, { count: results.length });
 }
