@@ -15,7 +15,7 @@ function mockResponse() {
 }
 
 test('busca pública usa no-store e não ecoa dado sensível', () => {
-  const req = { method: 'POST', body: { q: 'meu CPF é 123.456.789-10' }, query: {} };
+  const req = { method: 'POST', body: { q: 'meu CPF é 123.456.789-10' }, query: {}, headers: {} };
   const res = mockResponse();
   handler(req, res);
   assert.equal(res.statusCode, 400);
@@ -25,10 +25,23 @@ test('busca pública usa no-store e não ecoa dado sensível', () => {
 });
 
 test('busca pública retorna seção por assunto geral via POST', () => {
-  const req = { method: 'POST', body: { q: 'recadastramento anual' }, query: {} };
+  const req = { method: 'POST', body: { q: 'recadastramento anual' }, query: {}, headers: {} };
   const res = mockResponse();
   handler(req, res);
   assert.equal(res.statusCode, 200);
   assert.equal(res.payload.ok, true);
   assert.ok(res.payload.results.some((item) => item.title.includes('CGF/7')));
+});
+
+test('busca POST rejeita requisição explicitamente cross-site', () => {
+  const req = {
+    method: 'POST',
+    body: { q: 'recadastramento anual' },
+    query: {},
+    headers: { 'sec-fetch-site': 'cross-site', origin: 'https://exemplo.invalid' }
+  };
+  const res = mockResponse();
+  handler(req, res);
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.payload.ok, false);
 });
