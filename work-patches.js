@@ -1,16 +1,14 @@
 // Ponte de compatibilidade para o bundle canônico gerado no Work.
 // Mantém correções públicas verificadas sem editar manualmente o artefato minificado.
 
-const TEXT_PATCHES = new Map([
-  ['(62) 99953-121', '(62) 99953-1211']
-]);
+const TEXT_PATCHES = [
+  { pattern: /\(62\) 99953-121(?!\d)/g, replacement: '(62) 99953-1211' }
+];
 
 function patchTextNode(node) {
   if (!node?.nodeValue) return;
   let next = node.nodeValue;
-  for (const [from, to] of TEXT_PATCHES) {
-    if (next.includes(from)) next = next.replaceAll(from, to);
-  }
+  for (const patch of TEXT_PATCHES) next = next.replace(patch.pattern, patch.replacement);
   if (next !== node.nodeValue) node.nodeValue = next;
 }
 
