@@ -71,7 +71,7 @@ function Faq({ faqs = [] }) {
       </div>
       <div className="faq-grid-react">
         {faqs.map((item, index) => (
-          <details key={`${index}-${item.q}`}>
+          <details id={`faq-${index + 1}`} key={`${index}-${item.q}`}>
             <summary>{item.q}</summary>
             <p>{item.a}</p>
           </details>
