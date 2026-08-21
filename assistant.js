@@ -4,13 +4,17 @@ const history = [];
 
 const CLIENT_SENSITIVE_PATTERNS = [
   /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/,
-  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
+  /\brg\s*[:#-]?\s*\d{5,12}[\dxX]?\b/i,
+  /\bmatr[ií]cula\s*[:#-]?\s*\d{4,12}\b/i,
   /(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?9?\d{4}[-\s]?\d{4}\b/,
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
+  /\b(?:\d[ -]*?){13,19}\b/,
   /\b(?:sei|processo)\s*(?:n[ºo.]*)?\s*[:#-]?\s*\d{8,}(?:[./-]\d+)*\b/i,
   /\b(?:senha|password|pin)\s*[:=-]\s*\S+/i,
   /\b(?:bearer|authorization)\s*[:=]?\s+[A-Za-z0-9._~+\/-]{16,}\b/i,
   /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/,
-  /\b(?:sk|pk|api)[-_][A-Za-z0-9_-]{16,}\b/i
+  /\b(?:sk|pk|api)[-_][A-Za-z0-9_-]{16,}\b/i,
+  /\b(?:rua|avenida|av\.|alameda|quadra|q\.|logradouro)\s+[\p{L}0-9 .'-]{3,}\s*,?\s*\d{1,6}\b/iu
 ];
 
 function containsSensitiveData(value = '') {
@@ -65,7 +69,7 @@ function buildUi() {
   messages.setAttribute('aria-live', 'polite');
   messages.setAttribute('aria-relevant', 'additions');
 
-  const warning = el('p', 'cgf-ai-warning', 'Não informe CPF, RG, matrícula, telefone pessoal, dados bancários, senha, token, número de processo ou informação sigilosa.');
+  const warning = el('p', 'cgf-ai-warning', 'Não informe CPF, RG, matrícula, telefone pessoal, e-mail, endereço, dados bancários, senha, token, número de processo ou informação sigilosa.');
 
   const form = el('form', 'cgf-ai-form');
   const label = el('label', '', 'Digite sua dúvida para o Assistente CGF');
@@ -125,7 +129,7 @@ function buildUi() {
       input.value = '';
       addMessage(
         'assistant',
-        'Proteção de dados ativada no navegador. Remova identificadores, telefone, e-mail, número de processo, senha ou token e descreva somente o assunto geral.',
+        'Proteção de dados ativada no navegador. Remova identificadores, contato pessoal, endereço, número de processo, dados bancários, senha ou token e descreva somente o assunto geral.',
         null,
         true
       );
