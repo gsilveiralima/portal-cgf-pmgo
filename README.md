@@ -1,39 +1,48 @@
-# Portal CGF PMGO — v2.2
+# Portal CGF PMGO — v2.3
 
 Portal público de orientação do Comando de Gestão e Finanças da Polícia Militar do Estado de Goiás.
 
-## Referência visual canônica
-A interface pública preserva a versão visual aprovada para o projeto, incluindo os ativos `cgf-emblem-digital.png` e `cgf-hero-medallion.png`, hero institucional, acessibilidade, orientador, cards das seções CGF/1 a CGF/9, painel detalhado, atualizações oficiais da PMGO e canais institucionais. Alterações de backend, segurança ou infraestrutura não devem descaracterizar essa identidade.
+## Evolução da base-fonte
+A página principal passa a usar **React 19 + Vite** com fonte versionada em `src/`. A interface não depende mais de correções aplicadas sobre o bundle compilado legado. Os ativos institucionais `cgf-emblem-digital.png` e `cgf-hero-medallion.png` permanecem preservados.
+
+O bundle anterior e a antiga camada `work-patches.js` podem permanecer no repositório apenas como referência histórica/rollback, mas não são carregados por `index.html` nem fazem parte da arquitetura ativa da página principal.
 
 ## Arquitetura
 - **GitHub:** fonte canônica e histórico de alterações.
+- **React/Vite:** componentes versionados, build reproduzível e código-fonte legível.
 - **Vercel:** produção, APIs serverless, cache e headers de segurança.
-- **Frontend canônico:** bundle visual preservado, com uma pequena camada de compatibilidade em `work-patches.js` para correções verificadas e integração same-origin.
-- **Backend de notícias:** `/api/news` consulta a fonte oficial da PMGO, filtra URLs e fornece uma resposta compatível ao bundle, evitando dependência CORS direta do navegador.
-- **Assistente CGF:** `/api/assistant` usa somente a base pública autorizada, com triagem local, bloqueio de dados sensíveis e fallback público quando a camada generativa não está disponível.
-- **Busca pública:** `/api/search` aceita POST, não mantém cache de consultas e bloqueia identificadores/credenciais detectáveis.
-- **Conteúdo público:** estrutura e competências resumidas do Regimento Interno do CGF (Portaria nº 18.207/2024) e canais oficiais da PMGO.
+- **Conteúdo dinâmico:** `/api/content` entrega seções, contatos públicos e FAQs em tempo de execução; alterações de conteúdo não exigem patch no bundle visual.
+- **Notícias:** `/api/news` consulta a fonte oficial da PMGO no servidor, filtra URLs e entrega resposta normalizada ao frontend.
+- **Orientador:** `/api/orientar` classifica o assunto usando a base pública e bloqueia padrões de dados pessoais/processuais.
+- **Assistente CGF:** `/api/assistant` usa a base pública autorizada, triagem local, IA e fallback público transparente.
+- **Busca:** `/api/search` usa POST na interface, `no-store` e validação de dados sensíveis.
+- **Observabilidade:** APIs recebem `X-Request-ID`, `Server-Timing` e log estruturado de metadados operacionais.
+- **Health check:** `/api/health` informa estado mínimo do serviço e consistência da base pública.
+- **Telemetria:** `/api/telemetry` aceita somente eventos e componentes predefinidos; não recebe texto livre, IP, user-agent, URL completa, cookies, armazenamento local ou conteúdo digitado.
 
-## Funcionalidades
-- orientação pública das seções CGF/1 a CGF/9;
-- orientador por assunto sem coleta de dados pessoais;
-- Assistente CGF com IA e fallback local transparente;
-- contatos públicos e canais institucionais;
-- atualizações oficiais da PMGO intermediadas pelo backend;
-- acessibilidade, alto contraste e layout responsivo;
-- 404, sitemap, manifest, canonical e metadados sociais;
-- CSP e headers de segurança via `vercel.json`;
-- testes e auditoria automatizada.
+## Componentes React
+- `src/App.jsx` — shell e composição da página;
+- `src/components/SectionGrid.jsx` — seções e contatos carregados dinamicamente;
+- `src/components/SearchPanel.jsx` — busca pública com bloqueio local de dados sensíveis;
+- `src/components/Orientador.jsx` — triagem pública;
+- `src/components/NewsFeed.jsx` — atualizações oficiais da PMGO;
+- `src/components/StatusPanel.jsx` — health check operacional;
+- `src/services/api.js` — cliente same-origin das APIs públicas;
+- `src/services/telemetry.js` — eventos de produto sem campos livres.
 
-## Segurança e governança
-O portal não recebe protocolos, não consulta SEI/RHNet/folha, não executa atos administrativos e não mantém banco de dados de conversas. O conteúdo público não deve reproduzir procedimentos internos ou material reservado. A auditoria bloqueia marcadores típicos do PAP na superfície publicada, exposição de segredos, referências públicas proibidas e regressões de segurança.
+## Privacidade e observabilidade
+A aplicação não registra, na telemetria criada por este projeto, corpo de requisição, conteúdo digitado, IP, user-agent, origem, cookies ou identificadores de usuário. A observabilidade técnica registra somente metadados operacionais necessários, como endpoint, método, status, duração, request ID e alguns marcadores controlados por lista fechada.
 
-O frontend também bloqueia ou recusa CPF, RG, matrícula, telefone pessoal, e-mail, números de processo, senhas, tokens de autenticação, JWTs e chaves de API quando esses padrões são enviados aos recursos de orientação/busca.
+O portal não recebe protocolos, não consulta SEI/RHNet/folha, não executa atos administrativos e não mantém banco de dados de conversas. O conteúdo público não deve reproduzir procedimentos internos ou material reservado.
 
-## Validação local
+## Build e validação local
 ```bash
+npm install
 npm run check
+npm run build
 ```
+
+O build Vite gera `dist/` e preserva as páginas estáticas das seções, manifest, sitemap, 404, estilos e ativos usados fora da aplicação React.
 
 ## Produção
 `https://portal-cgf-pmgo.vercel.app`
