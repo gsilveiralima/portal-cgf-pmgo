@@ -13,6 +13,14 @@ function parseBody(body) {
   try { return JSON.parse(body); } catch { return {}; }
 }
 
+function sameOrigin(req) {
+  if (req.headers['sec-fetch-site'] === 'cross-site') return false;
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  try { return new URL(origin).host === host; } catch { return false; }
+}
+
 export default function handler(req, res) {
   if (!['GET', 'POST'].includes(req.method)) {
     res.setHeader('Allow', 'GET, POST');
@@ -21,6 +29,11 @@ export default function handler(req, res) {
 
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Vary', 'Origin');
+
+  if (req.method === 'POST' && !sameOrigin(req)) {
+    return res.status(403).json({ ok: false, message: 'Origem não permitida.' });
+  }
 
   const body = parseBody(req.body);
   const raw = req.method === 'POST' ? body.q : req.query?.q;
