@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const index = read('index.html');
+const app = read('src/App.jsx');
 const vercel = read('vercel.json');
 const vite = read('vite.config.js');
 const apiClient = read('src/services/api.js');
@@ -14,6 +15,10 @@ test('página principal usa fonte React e não o bundle legado', () => {
   assert.ok(index.includes('/src/main.jsx'));
   assert.equal(index.includes('work-patches.js'), false);
   assert.equal(index.includes('assets/index-CzXOL65S.js'), false);
+});
+
+test('FAQs React preservam as âncoras retornadas pela busca', () => {
+  assert.ok(app.includes('id={`faq-${index + 1}`}'));
 });
 
 test('build Vite está versionado e copia rotas estáticas necessárias', () => {
