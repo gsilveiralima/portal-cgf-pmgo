@@ -1,29 +1,35 @@
 name: Validar Portal CGF
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: portal-cgf-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  tests:
-    name: Testes funcionais
+  validate:
+    name: Testes, auditoria e sintaxe
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Executar testes
-        run: npm test
-  audit:
-    name: Auditoria visual, segurança e publicação
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Executar auditoria
-        run: npm run audit
+      - name: Executar testes e auditoria
+        run: npm run check
+      - name: Validar sintaxe dos módulos críticos
+        run: |
+          node --check api/assistant.js
+          node --check api/news.js
+          node --check api/orientar.js
+          node --check api/search.js
+          node --check assistant.js
+          node --check work-patches.js
