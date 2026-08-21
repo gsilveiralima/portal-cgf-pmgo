@@ -21,3 +21,9 @@ test('AI SDK está fixado e notícias passam pelo backend same-origin', () => {
   assert.match(pkg.dependencies.ai, /^\d+\.\d+\.\d+$/);
   assert.ok(patches.includes('/api/news?format=wp'));
 });
+
+test('camada de compatibilidade corrige contatos públicos conhecidos', () => {
+  assert.ok(patches.includes('99953-1211'));
+  assert.ok(patches.includes('99930-2700'));
+  assert.ok(patches.includes('(?!\\d)'));
+});
