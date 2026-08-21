@@ -15,21 +15,31 @@ concurrency:
 
 jobs:
   validate:
-    name: Testes, auditoria e sintaxe
+    name: Testes, auditoria, sintaxe e build React
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Instalar dependências fixadas
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Executar testes e auditoria
         run: npm run check
       - name: Validar sintaxe dos módulos críticos
         run: |
           node --check api/assistant.js
+          node --check api/content.js
+          node --check api/health.js
           node --check api/news.js
           node --check api/orientar.js
           node --check api/search.js
+          node --check api/telemetry.js
           node --check assistant.js
-          node --check work-patches.js
+          node --check lib/observability.js
+          node --check src/services/api.js
+          node --check src/services/telemetry.js
+          node --check vite.config.js
+      - name: Compilar fonte React
+        run: npm run build
