@@ -14,10 +14,11 @@ function parseBody(body) {
 }
 
 function sameOrigin(req) {
-  if (req.headers['sec-fetch-site'] === 'cross-site') return false;
-  const origin = req.headers.origin;
+  const headers = req?.headers || {};
+  if (headers['sec-fetch-site'] === 'cross-site') return false;
+  const origin = headers.origin;
   if (!origin) return true;
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  const host = String(headers['x-forwarded-host'] || headers.host || '').split(',')[0].trim();
   try { return new URL(origin).host === host; } catch { return false; }
 }
 
