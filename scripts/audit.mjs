@@ -66,10 +66,22 @@ const assistantClient = read('assistant.js');
 if (!assistantClient.includes("fetch('/api/assistant'")) throw new Error('Interface do Assistente CGF não chama o backend próprio.');
 if (!assistantClient.includes('Não informe CPF')) throw new Error('Interface do Assistente CGF não exibe aviso de privacidade.');
 if (!assistantClient.includes('REQUEST_TIMEOUT_MS')) throw new Error('Assistente CGF não possui timeout explícito no cliente.');
+if (!assistantClient.includes('CLIENT_SENSITIVE_PATTERNS') || !assistantClient.includes('containsSensitiveData')) {
+  throw new Error('Assistente CGF não possui bloqueio preventivo de dados sensíveis no cliente.');
+}
+if (!assistantClient.includes("remember('user', message)")) {
+  throw new Error('Histórico do Assistente CGF não possui gravação explícita apenas após resposta válida.');
+}
+if (!assistantClient.includes('Mensagem ocultada localmente por proteção de dados.')) {
+  throw new Error('Assistente CGF não oculta no DOM mensagem bloqueada pelo servidor.');
+}
 
 const searchApi = read('api/search.js');
 if (!searchApi.includes("'Cache-Control', 'no-store'")) throw new Error('Busca pública não está protegida contra cache de entrada do usuário.');
 if (!searchApi.includes('validatePublicPrompt')) throw new Error('Busca pública não valida dados sensíveis.');
+if (!searchApi.includes('sameOrigin') || !searchApi.includes("req.method === 'POST' && !sameOrigin(req)")) {
+  throw new Error('Busca pública POST não está protegida contra origem cruzada.');
+}
 
 const newsApi = read('api/news.js');
 for (const signature of ['format', 'toWordPressCompat', 'AbortSignal.timeout', 'officialUrl']) {
@@ -153,4 +165,4 @@ if (suspiciousPhones.length) {
   console.warn(`AVISO: contatos com formato telefônico a reconfirmar na Articulação PMGO: ${suspiciousPhones.join(' | ')}`);
 }
 
-console.log(`Auditoria concluída: interface canônica preservada, proxy de notícias same-origin, Assistente CGF protegido, busca sem cache, PAP reservado não exposto, ${SECTIONS.length} seções, headers, sitemap e privacidade verificados.`);
+console.log(`Auditoria concluída: interface canônica preservada, proxy de notícias same-origin, Assistente CGF com bloqueio preventivo no cliente e servidor, busca POST same-origin e sem cache, PAP reservado não exposto, ${SECTIONS.length} seções, headers, sitemap e privacidade verificados.`);
