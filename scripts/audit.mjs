@@ -50,6 +50,9 @@ const workPatch = read('work-patches.js');
 if (!workPatch.includes('99953-121') || !workPatch.includes('99953-1211') || !workPatch.includes('TEXT_PATCHES')) {
   throw new Error('Correção pública verificada do telefone da CGF/3 não está protegida.');
 }
+if (!workPatch.includes('99302-700') || !workPatch.includes('99930-2700')) {
+  throw new Error('Correção pública do telefone geral do Comando CGF não está protegida.');
+}
 if (!workPatch.includes("/api/news?format=wp")) {
   throw new Error('Bundle canônico não está protegido pelo proxy same-origin de notícias.');
 }
@@ -153,13 +156,22 @@ for (const section of SECTIONS) {
   if (!sitemap.includes(`/secoes/${section.slug}/`)) throw new Error(`Sitemap sem ${section.slug}`);
 }
 
+function isPlausibleBrPhone(phone) {
+  let digits = String(phone || '').replace(/\D/g, '');
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) digits = digits.slice(2);
+  if (digits.length === 10) return /^[1-9]{2}[2-5]\d{7}$/.test(digits);
+  if (digits.length === 11) return /^[1-9]{2}9\d{8}$/.test(digits);
+  return false;
+}
+
 const suspiciousPhones = SECTIONS.flatMap((section) => {
   const raw = String(section.contact.phone || '');
   if (!raw) return [];
-  return raw.split('·').map((phone) => phone.trim()).filter(Boolean).flatMap((phone) => {
-    const digits = phone.replace(/\D/g, '');
-    return digits.length === 10 || digits.length === 11 ? [] : [`${section.id}: ${phone}`];
-  });
+  return raw.split('·')
+    .map((phone) => phone.trim())
+    .filter(Boolean)
+    .filter((phone) => !isPlausibleBrPhone(phone))
+    .map((phone) => `${section.id}: ${phone}`);
 });
 if (suspiciousPhones.length) {
   console.warn(`AVISO: contatos com formato telefônico a reconfirmar na Articulação PMGO: ${suspiciousPhones.join(' | ')}`);
