@@ -1,25 +1,8 @@
+import { containsSensitiveData } from './lib/privacy.js';
+
 const MAX_HISTORY = 8;
 const REQUEST_TIMEOUT_MS = 20000;
 const history = [];
-
-const CLIENT_SENSITIVE_PATTERNS = [
-  /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/,
-  /\brg\s*[:#-]?\s*\d{5,12}[\dxX]?\b/i,
-  /\bmatr[ií]cula\s*[:#-]?\s*\d{4,12}\b/i,
-  /(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?9?\d{4}[-\s]?\d{4}\b/,
-  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
-  /\b(?:\d[ -]*?){13,19}\b/,
-  /\b(?:sei|processo)\s*(?:n[ºo.]*)?\s*[:#-]?\s*\d{8,}(?:[./-]\d+)*\b/i,
-  /\b(?:senha|password|pin)\s*[:=-]\s*\S+/i,
-  /\b(?:bearer|authorization)\s*[:=]?\s+[A-Za-z0-9._~+\/-]{16,}\b/i,
-  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/,
-  /\b(?:sk|pk|api)[-_][A-Za-z0-9_-]{16,}\b/i,
-  /\b(?:rua|avenida|av\.|alameda|quadra|q\.|logradouro)\s+[\p{L}0-9 .'-]{3,}\s*,?\s*\d{1,6}\b/iu
-];
-
-function containsSensitiveData(value = '') {
-  return CLIENT_SENSITIVE_PATTERNS.some((pattern) => pattern.test(String(value)));
-}
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
