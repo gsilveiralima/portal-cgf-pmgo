@@ -1,3 +1,5 @@
+import { startApiObservation } from '../lib/observability.js';
+
 const PMGO_ENDPOINT = 'https://goias.gov.br/policiamilitar/wp-json/wp/v2/posts?per_page=6&_embed=1&_fields=id,date,link,title,excerpt,rttpg_featured_image_url,_embedded';
 const PMGO_ORIGIN = 'https://goias.gov.br';
 
@@ -66,19 +68,23 @@ function toWordPressCompat(post) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
-    return res.status(405).json({ ok: false, message: 'Método não permitido.' });
-  }
-
-  const compat = String(req.query?.format || '').toLowerCase() === 'wp';
+  const observation = startApiObservation(req, '/api/news');
+  observation.applyHeaders(res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=86400');
 
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    observation.finish(res, 405);
+    return res.status(405).json({ ok: false, message: 'Método não permitido.' });
+  }
+
+  const compat = String(req.query?.format || '').toLowerCase() === 'wp';
+
   try {
     const upstream = await fetch(PMGO_ENDPOINT, {
-      headers: { Accept: 'application/json', 'User-Agent': 'Portal-CGF-PMGO/2.2' },
+      headers: { Accept: 'application/json', 'User-Agent': 'Portal-CGF-PMGO/2.3' },
       signal: AbortSignal.timeout(7000)
     });
     if (!upstream.ok) throw new Error(`PMGO ${upstream.status}`);
@@ -88,6 +94,7 @@ export default async function handler(req, res) {
       ? data.slice(0, 6).map(normalizePost).filter(Boolean)
       : [];
 
+    observation.finish(res, 200, { count: posts.length, source: 'pmgo', mode: compat ? 'wp-compat' : 'normalized' });
     if (compat) return res.status(200).json(posts.map(toWordPressCompat));
     return res.status(200).json({
       ok: true,
@@ -97,6 +104,7 @@ export default async function handler(req, res) {
       posts
     });
   } catch {
+    observation.finish(res, 200, { count: compat ? 0 : 1, source: 'fallback', mode: compat ? 'wp-compat' : 'normalized' });
     if (compat) return res.status(200).json([]);
     return res.status(200).json({
       ok: false,
