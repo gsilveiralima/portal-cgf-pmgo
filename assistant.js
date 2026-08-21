@@ -106,7 +106,7 @@ function buildUi() {
 
     const priorHistory = history.slice(-MAX_HISTORY);
     input.value = '';
-    addMessage('user', message, null, false, true);
+    addMessage('user', message);
     send.disabled = true;
     const typing = addTyping();
     const controller = new AbortController();
@@ -123,9 +123,10 @@ function buildUi() {
       typing.remove();
       if (!response.ok || !data.ok) {
         const errorText = data.message || 'Não consegui responder agora. Utilize o orientador do portal ou os canais oficiais da PMGO.';
-        addMessage('assistant', errorText, null, true, true);
+        addMessage('assistant', errorText, null, true);
         return;
       }
+      remember('user', message);
       addMessage('assistant', data.answer, data.route, false, true, data.mode);
     } catch (error) {
       typing.remove();
@@ -136,7 +137,6 @@ function buildUi() {
           ? 'A resposta excedeu o tempo de espera. Utilize o orientador do portal ou tente novamente sem dados pessoais.'
           : 'O assistente está temporariamente indisponível. Utilize o orientador do portal ou os canais oficiais da PMGO.',
         null,
-        true,
         true
       );
     } finally {
@@ -173,7 +173,7 @@ function buildUi() {
       meta.append(document.createElement('br'), link);
       box.append(meta);
     } else if (isError && role === 'assistant') {
-      box.append(el('div', 'cgf-ai-meta', 'Nenhum dado é reenviado automaticamente.'));
+      box.append(el('div', 'cgf-ai-meta', 'A mensagem rejeitada ou sem resposta não entra no histórico enviado nas próximas perguntas.'));
     }
 
     messages.append(box);
