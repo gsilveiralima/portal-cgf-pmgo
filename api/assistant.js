@@ -11,8 +11,24 @@ function send(res, status, payload) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Vary', 'Origin');
   return res.json(payload);
 }
+
+function parseBody(body) {
+  if (body && typeof body === 'object') return body;
+  if (typeof body !== 'string') return {};
+  try { return JSON.parse(body); } catch { return {}; }
+}
+
+function sameOrigin(req) {
+  if (req.headers['sec-fetch-site'] === 'cross-site') return false;
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  try { return new URL(origin).host === host; } catch { return false; }
+}
+
 function cleanHistory(value) {
   if (!Array.isArray(value)) return [];
   return value.slice(-MAX_HISTORY).flatMap((item) => {
@@ -21,44 +37,101 @@ function cleanHistory(value) {
     return role && content ? [{ role, content }] : [];
   });
 }
+
 function routePayload(routing) {
-  return routing.section ? { id: routing.section.id, title: routing.section.title, url: `/secoes/${routing.section.slug}/`, confidence: Number(routing.confidence.toFixed(2)), confidenceLabel: confidenceLabel(routing.confidence) } : null;
+  return routing.section ? {
+    id: routing.section.id,
+    title: routing.section.title,
+    url: `/secoes/${routing.section.slug}/`,
+    confidence: Number(routing.confidence.toFixed(2)),
+    confidenceLabel: confidenceLabel(routing.confidence)
+  } : null;
 }
+
 function fallbackAnswer(routing) {
   const prefix = 'A camada generativa de IA está temporariamente indisponível; estou usando a triagem automática da base pública do CGF. ';
   if (!routing.section) return prefix + 'Não consegui identificar uma seção com segurança. Consulte a lista de seções do portal ou utilize a Articulação PMGO/Fale Conosco para confirmação institucional.';
   const section = routing.section;
-  const contact = [`Caixa SEI ${section.contact.sei}`, section.contact.phone ? `telefone ${section.contact.phone}` : null, section.contact.email ? `e-mail ${section.contact.email}` : null].filter(Boolean).join(' · ');
+  const contact = [
+    `Caixa SEI ${section.contact.sei}`,
+    section.contact.phone ? `telefone ${section.contact.phone}` : null,
+    section.contact.email ? `e-mail ${section.contact.email}` : null
+  ].filter(Boolean).join(' · ');
   return `${prefix}A seção mais provável é ${section.id} — ${section.title}. ${section.summary} Contato público: ${contact}. Confirme no canal oficial antes de enviar documentos ou dados pessoais.`;
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { ok: false, message: 'Método não permitido.' }); }
-  if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { ok: false, message: 'Origem não permitida.' });
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return send(res, 405, { ok: false, message: 'Método não permitido.' });
+  }
+  if (!sameOrigin(req)) return send(res, 403, { ok: false, message: 'Origem não permitida.' });
 
-  const message = String(req.body?.message || '').trim();
+  const body = parseBody(req.body);
+  const message = String(body.message || '').trim();
   const validation = validatePublicPrompt(message);
-  if (!validation.ok) return send(res, 400, { ok: false, blocked: validation.code === 'SENSITIVE_DATA', code: validation.code, detected: validation.detected || [], message: validation.message });
+  if (!validation.ok) {
+    return send(res, 400, {
+      ok: false,
+      blocked: validation.code === 'SENSITIVE_DATA',
+      code: validation.code,
+      detected: validation.detected || [],
+      message: validation.message
+    });
+  }
 
-  const history = cleanHistory(req.body?.history);
+  const history = cleanHistory(body.history);
   for (const item of history.filter((entry) => entry.role === 'user')) {
     const checked = validatePublicPrompt(item.content);
-    if (!checked.ok && checked.code === 'SENSITIVE_DATA') return send(res, 400, { ok: false, blocked: true, code: 'SENSITIVE_DATA', message: 'A conversa contém dados pessoais. Inicie uma nova pergunta descrevendo somente o assunto geral.' });
+    if (!checked.ok && checked.code === 'SENSITIVE_DATA') {
+      return send(res, 400, {
+        ok: false,
+        blocked: true,
+        code: 'SENSITIVE_DATA',
+        message: 'A conversa contém dados pessoais. Inicie uma nova pergunta descrevendo somente o assunto geral.'
+      });
+    }
   }
 
   const routing = classifySection(validation.value);
   const context = buildAssistantContext();
-  const probable = routing.section ? { id: routing.section.id, title: routing.section.title, summary: routing.section.summary, sei: routing.section.contact.sei, phone: routing.section.contact.phone, email: routing.section.contact.email } : null;
+  const probable = routing.section ? {
+    id: routing.section.id,
+    title: routing.section.title,
+    summary: routing.section.summary,
+    sei: routing.section.contact.sei,
+    phone: routing.section.contact.phone,
+    email: routing.section.contact.email
+  } : null;
   const recent = history.map((item) => `${item.role === 'assistant' ? 'Assistente' : 'Usuário'}: ${item.content}`).join('\n');
   const prompt = `BASE PÚBLICA AUTORIZADA (única fonte institucional):\n${JSON.stringify(context)}\n${probable ? `TRIAGEM LOCAL: ${JSON.stringify(probable)}; confiança ${Math.round(routing.confidence * 100)}%.` : 'TRIAGEM LOCAL: baixa confiança; não force uma seção.'}\nCONVERSA RECENTE:\n${recent}\nUsuário: ${validation.value}`;
 
   try {
-    const result = await generateText({ model: 'openai/gpt-5.6-sol', system: ASSISTANT_POLICY, prompt, maxOutputTokens: 500 });
+    const result = await generateText({
+      model: 'openai/gpt-5.6-sol',
+      system: ASSISTANT_POLICY,
+      prompt,
+      maxOutputTokens: 500
+    });
     const answer = String(result.text || '').trim();
     if (!answer) throw new Error('Empty AI response');
-    return send(res, 200, { ok: true, mode: 'ai', answer, route: routePayload(routing), privacy: 'A conversa não é armazenada pelo Portal CGF. Não informe dados pessoais, processuais, bancários ou sigilosos.', source: 'Base pública do Portal CGF / canais oficiais da PMGO' });
+    return send(res, 200, {
+      ok: true,
+      mode: 'ai',
+      answer,
+      route: routePayload(routing),
+      privacy: 'O Portal CGF não mantém banco de dados de conversas. O texto é processado somente para gerar a orientação solicitada.',
+      source: 'Base pública do Portal CGF / canais oficiais da PMGO'
+    });
   } catch (error) {
     console.error('Assistant AI unavailable', error?.name || 'Error');
-    return send(res, 200, { ok: true, mode: 'public-fallback', answer: fallbackAnswer(routing), route: routePayload(routing), privacy: 'A conversa não é armazenada pelo Portal CGF.' });
+    return send(res, 200, {
+      ok: true,
+      mode: 'public-fallback',
+      answer: fallbackAnswer(routing),
+      route: routePayload(routing),
+      privacy: 'O Portal CGF não mantém banco de dados de conversas.',
+      source: 'Base pública local do Portal CGF'
+    });
   }
 }
