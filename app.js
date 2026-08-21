@@ -101,8 +101,16 @@ async function searchSite(event) {
   box.setAttribute('aria-busy', 'true');
   box.innerHTML = '<p>Pesquisando…</p>';
   try {
-    const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const response = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ q })
+    });
     const data = await response.json();
+    if (!response.ok || !data.ok) {
+      box.innerHTML = `<p>${escapeHtml(data.message || 'Revise a busca e tente novamente sem dados pessoais.')}</p>`;
+      return;
+    }
     if (!data.results?.length) {
       box.innerHTML = '<p>Nenhum resultado público localizado. Tente descrever o assunto com outras palavras.</p>';
       return;
