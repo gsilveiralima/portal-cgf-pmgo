@@ -2,7 +2,9 @@
 // Mantém correções públicas verificadas sem editar manualmente o artefato minificado.
 
 const TEXT_PATCHES = [
-  { pattern: /\(62\) 99953-121(?!\d)/g, replacement: '(62) 99953-1211' }
+  { pattern: /\(62\) 99953-121(?!\d)/g, replacement: '(62) 99953-1211' },
+  { pattern: /\(62\)\s*99302-700(?!\d)/g, replacement: '(62) 99930-2700' },
+  { pattern: /\b62\s+99302-700(?!\d)/g, replacement: '(62) 99930-2700' }
 ];
 
 function patchTextNode(node) {
