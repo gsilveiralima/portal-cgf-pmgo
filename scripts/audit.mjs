@@ -9,6 +9,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const required = [
   'index.html', '404.html', 'style.css', 'app.js', 'section.js', 'public-data.js',
   'robots.txt', 'sitemap.xml', 'site.webmanifest', 'vercel.json', 'work-patches.js',
+  'package-lock.json', '.github/workflows/ci.yml', '.github/workflows/codeql.yml', '.github/dependabot.yml',
+  'docs/PUBLIC-POLICY.md', 'docs/ENVIRONMENTS.md', 'docs/WAF-RUNBOOK.md',
   'api/news.js', 'api/orientar.js', 'api/search.js', 'api/assistant.js',
   'assistant.js', 'assistant.css', 'lib/assistant-context.js', 'lib/privacy.js', 'lib/security.js', 'lib/classifier.js',
   'cgf-emblem-digital.png', 'cgf-hero-medallion.png',
@@ -68,9 +70,10 @@ for (const detector of ['CPF', 'processo SEI', 'token de autenticação', 'token
 const securityModule = read('lib/security.js');
 if (!securityModule.includes("from './privacy.js'")) throw new Error('Validação do servidor não reutiliza a política compartilhada de privacidade.');
 if (!securityModule.includes('validatePublicPrompt')) throw new Error('Validação pública do servidor ausente.');
+if (!securityModule.includes('exceedsPublicPayloadLimit')) throw new Error('Limite de payload público ausente.');
 
 const assistantApi = read('api/assistant.js');
-for (const signature of ['generateText', 'validatePublicPrompt', 'gpt-5.6-sol', 'ASSISTANT_POLICY', 'sameOrigin', 'parseBody']) {
+for (const signature of ['generateText', 'validatePublicPrompt', 'exceedsPublicPayloadLimit', 'gpt-5.6-sol', 'ASSISTANT_POLICY', 'sameOrigin', 'parseBody']) {
   if (!assistantApi.includes(signature)) throw new Error(`Assistente IA sem requisito: ${signature}`);
 }
 for (const forbiddenSecret of ['OPENAI_API_KEY', 'AI_GATEWAY_API_KEY', 'VERCEL_OIDC_TOKEN']) {
@@ -93,8 +96,16 @@ if (!assistantClient.includes('Mensagem ocultada localmente por proteção de da
 const searchApi = read('api/search.js');
 if (!searchApi.includes("'Cache-Control', 'no-store'")) throw new Error('Busca pública não está protegida contra cache de entrada do usuário.');
 if (!searchApi.includes('validatePublicPrompt')) throw new Error('Busca pública não valida dados sensíveis.');
+if (!searchApi.includes('exceedsPublicPayloadLimit') || !searchApi.includes('PAYLOAD_TOO_LARGE')) {
+  throw new Error('Busca pública não aplica limite de payload.');
+}
 if (!searchApi.includes('sameOrigin') || !searchApi.includes("req.method === 'POST' && !sameOrigin(req)")) {
   throw new Error('Busca pública POST não está protegida contra origem cruzada.');
+}
+
+const orientarApi = read('api/orientar.js');
+if (!orientarApi.includes('exceedsPublicPayloadLimit') || !orientarApi.includes('PAYLOAD_TOO_LARGE')) {
+  throw new Error('Orientador público não aplica limite de payload.');
 }
 
 const newsApi = read('api/news.js');
@@ -145,7 +156,7 @@ for (const file of deployFiles) {
 
 const vercel = JSON.parse(read('vercel.json'));
 const headers = JSON.stringify(vercel.headers || []);
-for (const expected of ['Content-Security-Policy', 'X-Content-Type-Options', 'Permissions-Policy', 'Referrer-Policy', 'Strict-Transport-Security']) {
+for (const expected of ['Content-Security-Policy', 'X-Content-Type-Options', 'Permissions-Policy', 'Referrer-Policy', 'Strict-Transport-Security', 'X-Frame-Options', 'X-Permitted-Cross-Domain-Policies']) {
   if (!headers.includes(expected)) throw new Error(`Header ausente: ${expected}`);
 }
 if (!headers.includes('https://goias.gov.br')) throw new Error('CSP não permite a fonte oficial goias.gov.br.');
@@ -160,6 +171,28 @@ if (headers.includes('max-age=31536000, immutable')) {
 const pkg = JSON.parse(read('package.json'));
 if (!/^\d+\.\d+\.\d+$/.test(pkg.dependencies?.ai || '')) {
   throw new Error('A dependência ai deve estar fixada em versão exata para builds reproduzíveis.');
+}
+
+const lock = JSON.parse(read('package-lock.json'));
+if (lock.lockfileVersion !== 3) throw new Error('package-lock.json deve usar lockfileVersion 3.');
+if (lock.packages?.['']?.dependencies?.ai !== pkg.dependencies.ai) {
+  throw new Error('package.json e package-lock.json divergem na versão de ai.');
+}
+if (lock.packages?.['node_modules/ai']?.version !== pkg.dependencies.ai) {
+  throw new Error('Lockfile não fixa a versão efetivamente instalada de ai.');
+}
+
+const ci = read('.github/workflows/ci.yml');
+for (const signature of ['npm ci', 'npm run check', 'npm audit --audit-level=high']) {
+  if (!ci.includes(signature)) throw new Error(`CI sem gate obrigatório: ${signature}`);
+}
+const codeql = read('.github/workflows/codeql.yml');
+if (!codeql.includes('github/codeql-action/init@v4') || !codeql.includes('github/codeql-action/analyze@v4')) {
+  throw new Error('CodeQL v4 não está configurado.');
+}
+const dependabot = read('.github/dependabot.yml');
+if (!dependabot.includes('package-ecosystem: npm') || !dependabot.includes('interval: weekly')) {
+  throw new Error('Dependabot npm semanal não está configurado.');
 }
 
 const sitemap = read('sitemap.xml');
@@ -185,7 +218,7 @@ const suspiciousPhones = SECTIONS.flatMap((section) => {
     .map((phone) => `${section.id}: ${phone}`);
 });
 if (suspiciousPhones.length) {
-  console.warn(`AVISO: contatos com formato telefônico a reconfirmar na Articulação PMGO: ${suspiciousPhones.join(' | ')}`);
+  throw new Error(`Contatos telefônicos não validados não podem permanecer na fonte ativa: ${suspiciousPhones.join(' | ')}`);
 }
 
-console.log(`Auditoria concluída: interface canônica preservada, proxy de notícias same-origin, política de privacidade compartilhada no cliente/servidor, busca POST same-origin e sem cache, PAP reservado não exposto, ${SECTIONS.length} seções, headers, sitemap e contatos verificados estruturalmente.`);
+console.log(`Auditoria concluída: interface canônica preservada, política PUBLIC, payload limitado, supply chain com lockfile/CI/CodeQL/Dependabot, PAP reservado não exposto, ${SECTIONS.length} seções, headers, sitemap e contatos verificados estruturalmente.`);
