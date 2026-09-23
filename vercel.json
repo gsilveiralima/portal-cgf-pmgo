@@ -6,30 +6,74 @@
     {
       "source": "/(.*)",
       "headers": [
-        {"key":"X-Content-Type-Options","value":"nosniff"},
-        {"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},
-        {"key":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"},
-        {"key":"Content-Security-Policy","value":"default-src 'self'; connect-src 'self' https://goias.gov.br https://*.goias.gov.br; img-src 'self' data: blob: https:; style-src 'self'; script-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests"},
-        {"key":"Cross-Origin-Opener-Policy","value":"same-origin"},
-        {"key":"Cross-Origin-Resource-Policy","value":"same-site"},
-        {"key":"Strict-Transport-Security","value":"max-age=63072000; includeSubDomains; preload"},
-        {"key":"X-DNS-Prefetch-Control","value":"on"}
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; connect-src 'self' https://goias.gov.br https://*.goias.gov.br; img-src 'self' data: blob: https:; style-src 'self'; script-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-site"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Permitted-Cross-Domain-Policies",
+          "value": "none"
+        },
+        {
+          "key": "Origin-Agent-Cluster",
+          "value": "?1"
+        }
       ]
     },
     {
       "source": "/assets/(.*)",
       "headers": [
-        {"key":"Cache-Control","value":"public, max-age=300, stale-while-revalidate=86400"}
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, stale-while-revalidate=86400"
+        }
       ]
     },
     {
       "source": "/cgf-(.*).png",
       "headers": [
-        {"key":"Cache-Control","value":"public, max-age=86400, stale-while-revalidate=604800"}
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
       ]
     }
   ],
   "functions": {
-    "api/*.js": { "maxDuration": 20 }
+    "api/*.js": {
+      "maxDuration": 20
+    }
   }
 }
