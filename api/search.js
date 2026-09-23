@@ -1,5 +1,5 @@
 import { FAQS, SECTIONS } from '../public-data.js';
-import { normalizeText, validatePublicPrompt } from '../lib/security.js';
+import { exceedsPublicPayloadLimit, normalizeText, validatePublicPrompt } from '../lib/security.js';
 
 function score(query, text) {
   const q = normalizeText(query).split(' ').filter((token) => token.length > 2);
@@ -34,6 +34,10 @@ export default function handler(req, res) {
 
   if (req.method === 'POST' && !sameOrigin(req)) {
     return res.status(403).json({ ok: false, message: 'Origem não permitida.' });
+  }
+
+  if (req.method === 'POST' && exceedsPublicPayloadLimit(req)) {
+    return res.status(413).json({ ok: false, code: 'PAYLOAD_TOO_LARGE', message: 'Requisição acima do limite permitido.' });
   }
 
   const body = parseBody(req.body);
