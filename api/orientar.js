@@ -1,5 +1,5 @@
 import { classifySection, confidenceLabel } from '../lib/classifier.js';
-import { validatePublicPrompt } from '../lib/security.js';
+import { exceedsPublicPayloadLimit, validatePublicPrompt } from '../lib/security.js';
 
 function send(res, status, payload) {
   res.status(status);
@@ -32,6 +32,10 @@ export default function handler(req, res) {
     return send(res, 405, { ok: false, message: 'Método não permitido.' });
   }
   if (!sameOrigin(req)) return send(res, 403, { ok: false, message: 'Origem não permitida.' });
+
+  if (exceedsPublicPayloadLimit(req)) {
+    return send(res, 413, { ok: false, code: 'PAYLOAD_TOO_LARGE', message: 'Requisição acima do limite permitido.' });
+  }
 
   const body = parseBody(req.body);
   const validation = validatePublicPrompt(body.message);

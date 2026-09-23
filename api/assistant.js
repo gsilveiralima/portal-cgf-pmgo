@@ -1,7 +1,7 @@
 import { generateText } from 'ai';
 import { buildAssistantContext, ASSISTANT_POLICY } from '../lib/assistant-context.js';
 import { classifySection, confidenceLabel } from '../lib/classifier.js';
-import { validatePublicPrompt } from '../lib/security.js';
+import { exceedsPublicPayloadLimit, validatePublicPrompt } from '../lib/security.js';
 
 const MAX_HISTORY = 8;
 const MAX_MESSAGE = 500;
@@ -68,6 +68,10 @@ export default async function handler(req, res) {
     return send(res, 405, { ok: false, message: 'Método não permitido.' });
   }
   if (!sameOrigin(req)) return send(res, 403, { ok: false, message: 'Origem não permitida.' });
+
+  if (exceedsPublicPayloadLimit(req)) {
+    return send(res, 413, { ok: false, code: 'PAYLOAD_TOO_LARGE', message: 'Requisição acima do limite permitido.' });
+  }
 
   const body = parseBody(req.body);
   const message = String(body.message || '').trim();

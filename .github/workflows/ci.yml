@@ -2,8 +2,11 @@ name: Validar Portal CGF
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'p0-*'
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,16 +18,21 @@ concurrency:
 
 jobs:
   validate:
-    name: Testes, auditoria e sintaxe
+    name: Testes, auditoria, sintaxe e dependências
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
+          cache: npm
+      - name: Instalar dependências reproduzivelmente
+        run: npm ci
       - name: Executar testes e auditoria
         run: npm run check
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
       - name: Validar sintaxe dos módulos críticos
         run: |
           node --check api/assistant.js
