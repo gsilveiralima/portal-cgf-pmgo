@@ -31,7 +31,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['reserva remunerada', 'reforma', 'licenciamento', 'averbação de tempo de serviço', 'abono de permanência', 'históricos e certidões funcionais'],
     keywords: ['reserva', 'inativacao', 'inativação', 'reforma', 'licenciamento', 'averbacao', 'averbação', 'tempo de servico', 'tempo de serviço', 'abono permanencia', 'abono de permanência', 'historico funcional', 'histórico funcional', 'certidao', 'certidão'],
     training: ['quero saber sobre reserva remunerada', 'como tratar averbação de tempo de serviço', 'dúvida sobre reforma', 'abono de permanência', 'preciso de histórico funcional'],
-    contact: { sei: '09849', phone: '(62) 99837-786', email: null, source: contactSource },
+    contact: { sei: '09849', phone: null, email: null, source: contactSource },
     source: commonSource
   },
   {
@@ -40,7 +40,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['cancelamento ou anulação de punição', 'exclusão e licenciamento', 'demissão', 'reinclusão', 'reintegração', 'notificações administrativas'],
     keywords: ['justica', 'justiça', 'notificacao', 'notificação', 'judicial', 'punicao', 'punição', 'cancelamento', 'anulacao', 'anulação', 'exclusao', 'exclusão', 'licenciamento', 'demissao', 'demissão', 'reinclusao', 'reinclusão', 'reintegracao', 'reintegração'],
     training: ['recebi uma notificação administrativa', 'dúvida sobre reintegração', 'processo de reinclusão', 'cancelamento de punição', 'assunto de justiça administrativa'],
-    contact: { sei: '09996', phone: '(62) 99920-372', email: 'crh2pmgo@gmail.com', source: contactSource },
+    contact: { sei: '09996', phone: null, email: 'crh2pmgo@gmail.com', source: contactSource },
     source: commonSource
   },
   {
@@ -66,7 +66,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['agregação e reversão', 'ajuda de custo', 'licença especial', 'licença por interesse particular', 'controle de efetivo', 'atos de administração de pessoal'],
     keywords: ['administracao de pessoal', 'administração de pessoal', 'agregacao', 'agregação', 'reversao', 'reversão', 'ajuda de custo', 'licenca', 'licença', 'efetivo', 'lotacao', 'lotação', 'almanaque', 'afastamento'],
     training: ['dúvida sobre agregação', 'reversão ao serviço', 'licença por interesse particular', 'ajuda de custo', 'situação de efetivo', 'administração de pessoal'],
-    contact: { sei: '09997', phone: '(62) 99969-713', email: null, source: contactSource },
+    contact: { sei: '09997', phone: null, email: null, source: contactSource },
     source: commonSource
   },
   {
@@ -75,7 +75,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['identidade funcional', 'emissão e atualização de identificação', 'documentos de candidatos aprovados', 'identificação de dependentes', 'inclusão de voluntários aprovados'],
     keywords: ['identidade', 'identificacao', 'identificação', 'carteira funcional', 'candidato aprovado', 'concurso aprovado', 'documentos', 'inclusao', 'inclusão', 'dependente'],
     training: ['preciso renovar identidade funcional', 'emissão de carteira funcional', 'sou candidato aprovado e preciso entregar documentos', 'identidade de dependente', 'identificação funcional'],
-    contact: { sei: '10609', phone: '(62) 99628-212', email: 'pmgip11@gmail.com', source: contactSource },
+    contact: { sei: '10609', phone: null, email: 'pmgip11@gmail.com', source: contactSource },
     source: commonSource
   },
   {
@@ -84,7 +84,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['revisão de proventos', 'isenção de imposto de renda', 'dependentes', 'documentos funcionais', 'processos administrativos de veteranos', 'reforma por idade ou incapacidade'],
     keywords: ['veterano', 'veteranos', 'inativo', 'inativos', 'pensionista', 'pensionistas', 'proventos', 'dependente', 'imposto de renda', 'isencao', 'isenção', 'revisao', 'revisão', 'reforma'],
     training: ['sou veterano e preciso de orientação', 'revisão de proventos', 'isenção de imposto de renda', 'documento funcional de inativo', 'assunto de pensionista'],
-    contact: { sei: '09998', phone: '(62) 99806-601', email: null, source: contactSource },
+    contact: { sei: '09998', phone: null, email: null, source: contactSource },
     source: commonSource
   },
   {
@@ -93,7 +93,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['recadastramento anual', 'cadastramento', 'orientação em caso de bloqueio cadastral', 'atualização cadastral'],
     keywords: ['recadastramento', 'cadastramento', 'aniversario', 'aniversário', 'bloqueio', 'desbloqueio', 'atualizacao cadastral', 'atualização cadastral'],
     training: ['como fazer recadastramento', 'meu recadastramento anual', 'bloqueio por cadastro', 'atualização cadastral no mês do aniversário'],
-    contact: { sei: '16315', phone: '(62) 99631-436', email: 'ras.cgf.2016@gmail.com', source: contactSource },
+    contact: { sei: '16315', phone: null, email: 'ras.cgf.2016@gmail.com', source: contactSource },
     source: commonSource
   },
   {
@@ -102,7 +102,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['boletins gerais antigos', 'fichas funcionais antigas', 'processos arquivados', 'localização de documentos', 'cópias e desarquivamento conforme regras de acesso'],
     keywords: ['arquivo', 'boletim', 'boletim geral', 'ficha funcional', 'documento antigo', 'acervo', 'certidao', 'certidão', 'copia', 'cópia', 'desarquivar', 'desarquivamento'],
     training: ['preciso localizar boletim antigo', 'quero cópia de documento arquivado', 'ficha funcional antiga', 'desarquivamento', 'acervo histórico'],
-    contact: { sei: '10607', phone: '(62) 99615-246', email: null, source: contactSource },
+    contact: { sei: '10607', phone: null, email: null, source: contactSource },
     source: commonSource
   },
   {
@@ -111,7 +111,7 @@ export const SECTIONS = Object.freeze([
     publicTopics: ['administração financeira e contábil', 'pagamentos administrativos', 'folha de pagamento', 'pensão alimentícia', 'vantagens e descontos', 'fornecedores e execução orçamentária'],
     keywords: ['financeiro', 'financeira', 'orcamento', 'orçamento', 'contabilidade', 'pagamento', 'fornecedor', 'empenho', 'despesa', 'folha', 'pensao alimenticia', 'pensão alimentícia', 'desconto', 'vantagem', 'ferias', 'férias', 'diaria', 'diária', 'auxilio funeral', 'auxílio funeral'],
     training: ['dúvida sobre folha de pagamento', 'pensão alimentícia', 'pagamento de fornecedor', 'assunto orçamentário', 'vantagem ou desconto em folha', 'férias e acerto financeiro'],
-    contact: { sei: '09508', phone: '(62) 32011-405 · (62) 9991-1390', email: null, source: contactSource },
+    contact: { sei: '09508', phone: null, email: null, source: contactSource },
     source: commonSource
   }
 ]);
