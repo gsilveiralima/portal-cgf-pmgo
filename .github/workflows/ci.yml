@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
       - name: Executar testes e auditoria
         run: npm run check
       - name: Validar sintaxe dos módulos críticos
